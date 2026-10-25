@@ -1,0 +1,45 @@
+# Secrets. .env holds WANDB_API_KEY; never commit it, never put it in a zip
+# that leaves this machine.
+.env
+.env.*
+!.env.example
+
+# Virtual environment (setup.bat creates .venv here)
+.venv/
+venv/
+
+# Python bytecode
+__pycache__/
+*.py[cod]
+
+# Training output. Checkpoints are ~330 MB each, far over GitHub's 100 MiB
+# object limit. The loss history and the best-checkpoint record are small and
+# worth keeping, so they are exempted below.
+# Note the trailing /* rather than /: git never descends into an ignored
+# DIRECTORY, so a negation inside one would have no effect.
+checkpoints/*
+!checkpoints/metrics.csv
+!checkpoints/best.json
+metrics_old_*.csv
+*.t7
+
+# The exported encoder is the deliverable, but it is still 24 MB of binary.
+# Ship it as a release artifact or through LFS rather than a plain commit.
+# export/
+
+# Experiment tracker state
+wandb/
+*.wandb
+
+# Phonemized corpus: 141 MB of pickles, rebuildable with
+# server_side/prepare_data.py. stats.json records the provenance and is small,
+# so it stays tracked.
+data/*.pkl
+!data/stats.json
+
+# OS and editor noise
+.DS_Store
+Thumbs.db
+*.swp
+.vscode/
+.idea/
