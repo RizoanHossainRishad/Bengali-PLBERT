@@ -1,0 +1,28 @@
+# One command installs everything:
+#
+#     pip install -r requirements.txt
+#
+# The --extra-index-url line below is what makes that possible. PyPI's "torch"
+# is the CPU-only build on Windows; the CUDA build lives on PyTorch's own
+# index. Pinning the local version "+cu121" means only that index can satisfy
+# it, so pip cannot silently fall back to the CPU wheel.
+#
+# Requires Python 3.9 - 3.12 (64-bit). There are no Windows wheels for 3.13:
+# tokenizers and numpy would try to build from source and fail.
+
+--extra-index-url https://download.pytorch.org/whl/cu121
+
+torch==2.5.1+cu121
+
+# transformers is pinned because ALBERT's state_dict key names must match the
+# version on the training server (4.36.2), or the checkpoint will not load
+# into StyleTTS2.
+transformers==4.36.2
+tokenizers>=0.15,<0.16
+numpy>=1.23,<2.0
+PyYAML>=6.0
+safetensors>=0.4.0
+
+# Loss dashboard. Optional at runtime: metrics.csv is written either way, and
+# training continues if wandb is missing or cannot reach the network.
+wandb>=0.16,<0.19

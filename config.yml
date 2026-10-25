@@ -1,0 +1,70 @@
+# Bengali PL-BERT training configuration.
+#
+# Everything under model_params is FROZEN: StyleTTS2 rebuilds the encoder from
+# these exact numbers, and its bert_encoder / style-diffusion layers are shaped
+# around hidden_size 768 and vocab_size 178. Changing any of them means the
+# checkpoint will not fit the TTS model.
+
+log_dir: "checkpoints"
+data_folder: "data"
+
+num_steps: 200000
+save_interval: 1000
+val_interval: 5000
+log_interval: 100
+val_batches: 40
+# Only the newest step_N.t7 is kept (the new file is fully written before the
+# old one is removed). best.t7 is saved separately whenever val/loss_total
+# reaches a new low; its step and losses are in best.json.
+keep_last_checkpoints: 1
+
+# 8 is the measured-safe default for an 8 GB card. Run check_setup.py: it
+# finds the largest value that actually fits yours and prints the line to use.
+batch_size: 8
+
+# Accumulate N micro-batches before each optimizer step. The effective batch
+# becomes batch_size * N at NO extra VRAM, but each optimizer step takes N
+# times as long -- so halve num_steps when you double this to keep the same
+# wall-clock and the same number of samples seen.
+gradient_accumulation: 1
+num_workers: 0
+precision: "fp16"          # fp16 | bf16 | fp32
+learning_rate: 0.0001
+
+# Clip the global gradient norm before every optimizer step (0 disables).
+# The first run collapsed at step 25k -- every position started producing the
+# same hidden vector and never recovered -- while routine grad norms were
+# 40-77. The pre-clip norm is logged as train/grad_norm_max.
+grad_clip: 1.0
+
+# Stop training if a validation loss is worse than the best one by more than
+# this. A collapsed model sits ~5 above the best and never comes back, so
+# carrying on only burns hours; best.t7 still holds the good weights.
+collapse_margin: 1.0
+
+# Loss tracking. metrics.csv is always written in log_dir, W&B is optional.
+# Authenticate once on Windows with:  wandb login
+# No network? set mode: offline, then later:  wandb sync checkpoints\wandb\offline-run-*
+wandb:
+    enabled: true
+    project: "PLBERT-Bengali"
+    run_name: "bn-plbert-3060ti"
+    mode: "online"          # online | offline | disabled
+
+dataset_params:
+    token_separator: " "   # inserted between words
+    token_mask: "M"        # must exist in the 178-symbol table
+    word_separator: 30001  # <sep> id, taken from data/stats.json
+    max_mel_length: 512    # phoneme characters per training sample
+    word_mask_prob: 0.15
+    phoneme_mask_prob: 0.1
+    replace_prob: 0.2
+
+model_params:              # ---- DO NOT EDIT ----
+    vocab_size: 178
+    hidden_size: 768
+    num_attention_heads: 12
+    intermediate_size: 2048
+    max_position_embeddings: 512
+    num_hidden_layers: 12
+    dropout: 0.1
